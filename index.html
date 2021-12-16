@@ -53,6 +53,7 @@
             width: 60%;
             margin-right: auto;
             margin-left: auto;
+            text-align: left;
         }
         #entete h2{
             margin-top: 1.5em;
@@ -60,6 +61,9 @@
         }
         h2{
             font-size: 3em;
+        }
+        h3{
+            font-size: 2em;
         }
         button{
             background-color: #8a1739;
@@ -74,32 +78,95 @@
             padding-top: 9px;
             padding-bottom: 9px;
             color: white;
+            cursor: pointer;
+            user-select: none;
+        }
+        ul {
+            display: table;
+            margin: 0 auto;
+        }
+        li {
+            font-size: 2em;
         }
     </style>
 </head>
 <body>
 <div id="entete"><div><h1>Segmentation d’instances dans les images satellitaires</h1>
-<h2>Anis Bouaza, Yacine Mezaguer</h2><img style="width: 300px;" src="up.png"></div></div>
+<h2>Anis Bouaza | Yacine Mezaguer</h2><img style="width: 300px;" src="up.png"></div></div>
 <div style="margin-bottom: 60px;"></div>
 
-<button>Methode 1</button> <button>Methode 1</button>
+<a href="#RCNN"><button>Mask RCNN</button></a> <a href="#UNET"><button>U-Net et ACM</button></a>
 
-<h2>Gros titre</h2>
-<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod
-tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam,
-quis nostrud exercitation ullamco laboris nisi ut aliquip.</p>
 <br>
-<img style="width: 65vw;" src="1.png"><br>
-<p>Combinaison de U-Net avec ACM</p>
+<br>
+<br>
+<img style="width: 55vw;" src="segmentation.png"><br>
+<br>
+
+<h2 id="RCNN">Mask RCNN</h2>
+<h3>Architecture</h3>
+<img style="width: 30vw;" src="rcnn.png"><br>
+<p><strong>Backbone</strong> : permet d'extraire les feature maps peut être un resnet (50 /101) avec ou sans FPN l'image passe par deux routes avec plusieurs convolutions et l'autre qui est une sorte de raccourcis qui ne passe pas par ces traitements pour au finale agréger les deux routes.Les skips aident à la propagation du gradient dans les réseaux profonds.
+</p>
+
+<p><strong>RPN </strong> : region proposal network, depuis les features map essaye de proposer de régions d'intérêts qui contiennent des potentiels objets, une partie détecte si une box contient un objet et l’autre régresseur de bounding boxes quand on a plusieurs boxes qui encerclent le même objet on prends celle avec le plus grand score 'objectless' (non max suppression)
+</p>
+
+<p><strong>ROIalign</strong> : normalise la taille des régions d'intérêts
+</p>
+
+<p><strong>Branche de la détection d'objets</strong> : dans cette branche on prédit la catégorie de l'objet et on rectifie encore plus la bounding box autour l'architecture utilisé est un fully connected layer pour output n classes et 4*n box
+</p>
+
+<p><strong>Branche de la génération de masques</strong> : utilise un FCN pour produire les masques binaires (un pour chaque classe)
+</p>
+
+<p><strong>DataSet</strong> : SpaceNet V2 ( Vegas City = 3851 images en format tif avec des informations sur objets / masque en geojson)
+</p>
+
+<p><strong>Hyper Parametres importants:</strong>  <br>
+Train_rois_per_image : le nombre maximum de region d’interets <br>
+Max_gt_instances : nombre maximum d’instances par image <br>
+Image size : 640 x 640 <br>
+Hyper Parametres de la loss : 5 scalaire differents chacun donne une importance à une partie des losses de la loss finale du mask r-cnn (rpn _class_loss, rpn_bbox_loss, mrcnn_class_loss, mrcnn_bbox_loss, Mrcnn_mask_loss)
+</p>
+
+<h3>Résultats:</h3>
+<br>
+<img style="width: 45vw;" src="2.png"><br>
+<br><img style="width: 20vw;" src="res2.png"><br>
+<br><br><br><br><br>
+
+<hr>
+
+<h2 id="UNET">U-Net avec ACM</h2>
+
+<img style="width: 50vw;" src="1.png"><br>
+<br>
+
+<p><strong>U-Net + ACM</strong> : Dans cette approche, on combine entre un modèle CNN avec un modèle de contour actif.
+Une image RGB centrée sur la zone à segmenter est donnée en entrée au modèle CNN qui va produire une segmentation sémantique de l’image. Donnant en sortie une image masque des bâtiments de l’image.
+On donne ensuite ce masque de segmentation en entrée à un modèle de contour actif qui va essayer de déterminer les contours du bâtiment.
+Cette approche requiert de faire une initialisation manuelle par un utilisateur, ou bien une initialisation automatique préalable.</p>
+
+<p><strong>Le modèle CNN (U-Net)</strong> :</p>
 <br><br>
-<img style="width: 55vw;" src="2.png"><br>
-<p>Résultats obtenus</p>
+<img style="width: 40vw;" src="unet.png">
+<br><br><br>
+<p>L'architecture utilisée pour obtenir la segmentation sémantique initiale est celle du modèle U-Net.
+Ce modèle a été utilisé à la base pour la segmentation d’images biomédicales.
+Cette architecture est un type d’Encodeur-Décodeur avec des skip-connections (saut de connections entre les blocs de convolution), ces connexions directes entre les premiers blocs et derniers blocs du modèle permettent d’obtenir les informations de bas niveau perdues au cours des différentes convolutions.</p>
 
-<h2>Gros titre 2</h2>
-<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod
-tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam,
-quis nostrud exercitation ullamco laboris nisi ut aliquip.</p>
-<br>
+<p><strong>L’entraînement</strong> : Pour l’entraînement nous avons utilisé le dataset Vaihingen, issu de l’ISPRS “2D semantic labeling contest”.
+Le dataset comporte 168 bâtiments, nous en avons utilisé 140 pour l’entraînement, et laissé 28 images pour la validation qualitative des résultats.
+</p>
+
+<p><strong>Contour actif</strong> :
+Le modèle de contour actif va commencer à partir d’un contour englobant toute l’image, puis va se muer pour rétrécir et s’adapter à la forme de l’objet que l’on veut segmenter.
+Pour ce faire, le contour cherche à minimiser une fonction d'énergie qui est dépendante de sa taille, sa forme et aussi de l’image (le gradient de l’image est utilisé). </p>
+
+
+
 <br>
 <br>
 <br>
