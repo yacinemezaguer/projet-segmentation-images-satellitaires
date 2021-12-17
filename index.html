@@ -97,10 +97,20 @@
 
 <a href="#RCNN"><button>Mask RCNN</button></a> <a href="#UNET"><button>U-Net et ACM</button></a>
 
+<h2>Introduction</h2>
+<p>L’objectif de la segmentation d’instance est d’affilier à chaque pixel une
+instance d’objet faisant la différence entre chaque objet d’une même classe.
+Contrairement à la segmentation sémantique, une scène avec plusieurs voitures par exemple se voit affilier une couleur de pixel différente pour chaque instance de voiture.
+</p>
+
 <br>
 <br>
 <br>
-<img style="width: 55vw;" src="segmentation.png"><br>
+<img style="width: 55vw;" src="segmentation.png"><br><br>
+
+<figcaption>Learning deep structured active contours end-to-end. Diego Marcos et al.
+    <br>(Vert: Ground truth, Bleu: Contour initial, Jaune: Résultat de segmentation)
+</figcaption>
 <br>
 
 <h2 id="RCNN">Mask RCNN</h2>
